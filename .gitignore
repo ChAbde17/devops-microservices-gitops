@@ -32,3 +32,6 @@ kubeconfig
 .vscode/
 *.swp
 .DS_Store
+
+#Local Skills
+.agents
