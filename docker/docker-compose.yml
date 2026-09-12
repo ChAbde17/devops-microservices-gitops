@@ -1,0 +1,78 @@
+services:
+  # ── Backend (FastAPI) ──
+  backend:
+    build:
+      context: ../apps/backend
+      dockerfile: Dockerfile
+    container_name: devops-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://devops:devops@postgres:5432/devops_db
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - devops-net
+    restart: unless-stopped
+
+  # ── Frontend (React + Nginx) ──
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: Dockerfile
+    container_name: devops-frontend
+    ports:
+      - "3000:8080"
+    depends_on:
+      - backend
+    networks:
+      - devops-net
+    restart: unless-stopped
+  
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    container_name: devops-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - devops-net
+    restart: unless-stopped
+  
+  # ── PostgreSQL ──
+  postgres:
+    image: postgres:15-alpine
+    container_name: devops-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: devops
+      POSTGRES_PASSWORD: devops
+      POSTGRES_DB: devops_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devops -d devops_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devops-net
+    restart: unless-stopped
+
+networks:
+  devops-net:
+    driver: bridge
+
+volumes:
+  pgdata:
