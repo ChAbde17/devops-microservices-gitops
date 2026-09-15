@@ -52,5 +52,5 @@ jobs:
       
       - name: Run Pytest
         run: |
-          cd apps/Backend
+          cd apps/backend
           pytest tests/ -v --tb=short
