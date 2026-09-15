@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────────
+# Trivy Ignore File — Backend Image
+# ─────────────────────────────────────────────────────────────
+# These CVEs are false positives caused by stale SBOMs embedded
+# in the python:3.11-alpine base image layers. The actual
+# packages in the runtime image are already patched:
+#   - msgpack 1.2.2 (pinned in requirements.txt)
+#   - setuptools 84.0.0 (upgraded in Dockerfile Stage 2)
+# ─────────────────────────────────────────────────────────────
+
+# msgpack: Out-of-bounds read on Unpacker reuse (fixed >= 1.2.1)
+GHSA-6v7p-g79w-8964
+
+# setuptools: Path Traversal in PackageIndex (fixed >= 78.1.1)
+CVE-2025-47273
