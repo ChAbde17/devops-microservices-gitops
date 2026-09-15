@@ -3,8 +3,9 @@ FROM python:3.11-alpine AS builder
 
 WORKDIR /build
 
-# Install build dependencies for C-extensions (uvloop, httptools)
-RUN apk add --no-cache gcc musl-dev libffi-dev
+# Upgrade Alpine OS packages & install build dependencies
+RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache gcc musl-dev libffi-dev
 
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -18,7 +19,11 @@ FROM python:3.11-alpine AS runner
 
 WORKDIR /app
 
-RUN addgroup -g 10001 -S appgroup && \
+# 1. Upgrade Alpine OS packages to patch libuuid/util-linux CVEs
+# 2. Upgrade system pip/setuptools/wheel to patch base image python-pkg CVEs
+RUN apk update && apk upgrade --no-cache && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    addgroup -g 10001 -S appgroup && \
     adduser -u 10001 -G appgroup -S -s /sbin/nologin appuser && \
     chown -R appuser:appgroup /app
 
