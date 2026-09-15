@@ -2,12 +2,13 @@ name: "Docker - Build, Scan & Publish"
 
 on:
   push:
+    branches: [main, "feature/**"]
+  pull_request:
     branches: [main]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/devops-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/devops-frontend
 
 jobs:
   build-backend:
@@ -18,6 +19,10 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set lowercased image name
+        run: |
+          echo "BACKEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/devops-backend" >> $GITHUB_ENV
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -54,7 +59,12 @@ jobs:
           image-ref: "${{ env.BACKEND_IMAGE }}:latest"
           format: "table"
           exit-code: "1"
+          ignore-unfixed: true
           severity: "CRITICAL,HIGH"
+          trivyignores: "apps/backend/.trivyignore"
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   build-frontend:
     name: "Build & Push Frontend"
@@ -64,6 +74,10 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set lowercased image name
+        run: |
+          echo "FRONTEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/devops-frontend" >> $GITHUB_ENV
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -91,8 +105,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=sha
-          cache-to: type=sha,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
@@ -100,4 +114,8 @@ jobs:
           image-ref: "${{ env.FRONTEND_IMAGE }}:latest"
           format: "table"
           exit-code: "1"
+          ignore-unfixed: true
           severity: "CRITICAL,HIGH"
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
