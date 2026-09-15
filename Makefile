@@ -32,3 +32,14 @@ clean: ## Remove temporary files and build artifacts
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@find . -type d -name ".pytest_cache" -exec rm -rf {} +
 	@echo "Clean completed."
+
+# ── CI Targets (mirrors GitHub Actions) ──
+.PHONY: ci-backend ci-frontend ci
+
+ci-backend:
+		cd apps/backend && ruff check app/ tests/ && pytest tests/ -v --tb=short
+
+ci frontend:
+		cd apps/frontend && npm run lint && npm run build
+
+ci: ci-backend ci-frontend
