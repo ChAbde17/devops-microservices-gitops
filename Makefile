@@ -37,9 +37,14 @@ clean: ## Remove temporary files and build artifacts
 .PHONY: ci-backend ci-frontend ci
 
 ci-backend:
-		cd apps/backend && ruff check app/ tests/ && pytest tests/ -v --tb=short
+	cd apps/backend && \
+	if [ -d ".venv" ]; then \
+		source .venv/bin/activate && ruff check app/ tests/ && pytest tests/ -v --tb=short; \
+	else \
+		ruff check app/ tests/ && pytest tests/ -v --tb=short; \
+	fi
 
-ci frontend:
-		cd apps/frontend && npm run lint && npm run build
+ci-frontend:
+	cd apps/frontend && npm run lint && npm run build
 
 ci: ci-backend ci-frontend
