@@ -48,3 +48,35 @@ ci-frontend:
 	cd apps/frontend && npm run lint && npm run build
 
 ci: ci-backend ci-frontend
+
+# ── Kubernetes Targets ──
+.PHONY: k8s-validate k8s-dry-run k8s-dev k8s-staging k8s-prod
+
+k8s-validate: ## Render and validate all Kustomize overlays
+	@echo "── Validating dev overlay ──"
+	kubectl kustomize k8s/overlays/dev > /dev/null
+	@echo "── Validating staging overlay ──"
+	kubectl kustomize k8s/overlays/staging > /dev/null
+	@echo "── Validating prod overlay ──"
+	kubectl kustomize k8s/overlays/prod > /dev/null
+	@echo "✅ All Kustomize overlays are valid."
+
+k8s-dry-run: ## Render final manifests without applying (dry-run)
+	@echo "── Dev overlay manifests ──"
+	kubectl kustomize k8s/overlays/dev
+	@echo "\n── Staging overlay manifests ──"
+	kubectl kustomize k8s/overlays/staging
+	@echo "\n── Prod overlay manifests ──"
+	kubectl kustomize k8s/overlays/prod
+
+k8s-dev: ## Deploy to dev namespace
+	kubectl apply -k k8s/overlays/dev
+	@echo "✅ Deployed to devops-dev namespace."
+
+k8s-staging: ## Deploy to staging namespace
+	kubectl apply -k k8s/overlays/staging
+	@echo "✅ Deployed to devops-staging namespace."
+
+k8s-prod: ## Deploy to prod namespace
+	kubectl apply -k k8s/overlays/prod
+	@echo "✅ Deployed to devops-prod namespace."
