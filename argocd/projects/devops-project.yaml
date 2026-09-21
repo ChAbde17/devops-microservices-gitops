@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: devops-microservices
+  namespace: argocd
+spec:
+  description: "DevOps Microservices GitOps Platform"
+
+  #Only allow this GitHub repository as a source
+  sourceRepos:
+    - "https://https://github.com/ChAbde17/devops-microservices-gitops.git"
+
+  # Only allow deployments to these namespaces
+  destinations:
+    - namespace: devops-dev
+      server: https://kubernetes.default.svc
+    - namespace: devops-staging
+      server: https://kubernetes.default.svc
+    - namespace: devops-prod
+      server: https://kubernetes.default.svc
+
+  # Allow all Kubernetes resource types
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  # Allow creating namespaces (needed since our Kustomize creates Namespace resources)
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
