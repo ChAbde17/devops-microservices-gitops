@@ -9,7 +9,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app/kubernetes.io/name: backend
+    app.kubernetes.io/name: backend
   ports:
     - name: http
       port: 8000
