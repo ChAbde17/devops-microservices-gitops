@@ -26,7 +26,7 @@ spec:
             - name: tcp-redis
               containerPort: 6379
               protocol: TCP
-          command: ["redis-server", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemorypolicy", "allkeys-lru"]
+          command: ["redis-server", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
           livenessProbe:
             exec:
               command:
