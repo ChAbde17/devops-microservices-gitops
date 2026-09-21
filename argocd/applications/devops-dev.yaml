@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devops-dev
+  namespace: argocd
+  # Sync waves: ArgoCD deploys resources in wave order
+  # Wave annotations go on the RESOURCES themselves (Deployments, StatefulSets, etc.)
+  # This Application-level finalizer ensures cleanup on deletion
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Which AppProject this belongs to (RBAC boundary)
+  project: devops-microservices
+
+  # ── SOURCE: Where to read manifests from ──
+  source:
+    repoURL: https://github.com/ChAbde17/devops-microservices-gitops.git
+    targetRevision: main
+    path: k8s/overlays/dev
+
+  # ── DESTINATION: Where to deploy ──
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: devops-dev
+
+  # ── SYNC POLICY: How aggressively to keep in sync ──
+  syncPolicy:
+    automated:
+      prune: true       # Delete resources removed from Git
+      selfHeal: true    # Revert manual cluster changes back to Git state
+      allowEmpty: false # Safety: don't delete everything if Git path is empty
+    syncOptions:
+      - CreateNamespace=true   # Auto-create devops-dev namespace if missing
+      - PrunePropagationPolicy=foreground  # Wait for child resources before pruning
+      - PruneLast=true  # Prune deleted resources after all new resources are healthy
+    retry:
+      limit: 3          # Retry failed syncs up to 3 times
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m

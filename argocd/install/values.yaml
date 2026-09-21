@@ -1,0 +1,58 @@
+# ArgoCD Helm chart custom values for Minikube
+# Ref: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+
+# ── Server ──
+server:
+  # Disable TLS on ArgoCD server (we access via port-forward, not Ingress)
+  extraArgs:
+    - --insecure
+  service:
+    type: ClusterIP
+
+# ── Repo Server ──
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ── Application Controller ──
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ── Redis (ArgoCD internal cache) ──
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# ── Notifications (disabled) ──
+notifications:
+  enabled: false
+
+# ── Dex (SSO) ──
+dex:
+  enabled: false
+
+# ── ApplicationSet Controller ──
+applicationSet:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi

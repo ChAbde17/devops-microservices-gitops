@@ -80,3 +80,37 @@ k8s-staging: ## Deploy to staging namespace
 k8s-prod: ## Deploy to prod namespace
 	kubectl apply -k k8s/overlays/prod
 	@echo "✅ Deployed to devops-prod namespace."
+
+# ── ArgoCD Targets ──
+.PHONY: argocd-install argocd-password argocd-ui argocd-apply argocd-status
+
+argocd-install: ## Install ArgoCD on Minikube via Helm
+	helm repo add argo https://argoproj.github.io/argo-helm
+	helm repo update
+	kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+	helm install argocd argo/argo-cd -n argocd -f argocd/install/values.yaml
+	@echo "⏳ Waiting for ArgoCD pods to be ready..."
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/part-of=argocd -n argocd --timeout=120s
+	@echo "✅ ArgoCD installed successfully."
+
+argocd-password: ## Get ArgoCD admin password
+	@echo "ArgoCD admin password:"
+	@kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+
+argocd-ui: ## Port-forward ArgoCD UI to https://localhost:8443
+	@echo "🌐 ArgoCD UI available at: https://localhost:8443"
+	@echo "   Username: admin"
+	@echo "   Password: run 'make argocd-password'"
+	kubectl port-forward svc/argocd-server -n argocd 8443:443
+
+argocd-apply: ## Apply ArgoCD Project and Applications
+	kubectl apply -f argocd/projects/devops-project.yaml
+	kubectl apply -f argocd/applications/devops-dev.yaml
+	kubectl apply -f argocd/applications/devops-prod.yaml
+	@echo "✅ ArgoCD Applications applied. Check UI for sync status."
+
+argocd-status: ## Show ArgoCD Application sync status
+	@echo "── Dev Application ──"
+	kubectl get application devops-dev -n argocd -o jsonpath='{.status.sync.status}' && echo
+	@echo "── Prod Application ──"
+	kubectl get application devops-prod -n argocd -o jsonpath='{.status.sync.status}' && echo
