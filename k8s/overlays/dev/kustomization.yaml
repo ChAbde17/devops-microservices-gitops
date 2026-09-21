@@ -70,3 +70,39 @@ patches:
       data:
         DEBUG: "true"
         CORS_ORIGINS: '["*"]'
+        
+    # Ingress: override host for dev environment
+  - target:
+      kind: Ingress
+      name: devops-ingress
+    patch: |
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: devops-ingress
+      spec:
+        rules:
+          - host: dev.devops.local
+            http:
+              paths:
+                - path: /api
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: backend-svc
+                      port:
+                        number: 8000
+                - path: /metrics
+                  pathType: Exact
+                  backend:
+                    service:
+                      name: backend-svc
+                      port:
+                        number: 8000
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: frontend-svc
+                      port:
+                        number: 80
